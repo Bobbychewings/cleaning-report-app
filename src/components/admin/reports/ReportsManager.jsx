@@ -1,0 +1,17 @@
+import React, { useState } from 'react';
+import ReportsList from './ReportsList';
+import ReportDetails from './ReportDetails';
+
+export default function ReportsManager() {
+  const [selectedReport, setSelectedReport] = useState(null);
+
+  return (
+    <div>
+      {!selectedReport ? (
+        <ReportsList onSelectReport={setSelectedReport} />
+      ) : (
+        <ReportDetails report={selectedReport} onBack={() => setSelectedReport(null)} />
+      )}
+    </div>
+  );
+}
