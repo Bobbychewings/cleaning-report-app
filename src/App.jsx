@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { RequireAuth } from './components/RequireAuth';
 import Login from './pages/auth/Login';

@@ -153,7 +153,7 @@ export default function FormBuilder() {
         <div className="text-center py-10 text-gray-500">Please select or add a location first to build its form.</div>
       ) : (
         <div className="space-y-6">
-          {fields.map((field, index) => (
+          {fields.map((field) => (
             <div key={field.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative group">
               <div className="flex items-start gap-4">
                 <div className="cursor-move text-gray-400 mt-2">
