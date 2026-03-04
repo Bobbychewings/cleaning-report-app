@@ -21,31 +21,31 @@ export default function AuditForm() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    async function fetchData() {
+      try {
+        // Fetch Location Details
+        const locDoc = await getDoc(doc(db, 'locations', locationId));
+        if (locDoc.exists()) {
+          setLocation(locDoc.data());
+        }
+
+        // Fetch Form Configuration
+        const formDoc = await getDoc(doc(db, 'forms', locationId));
+        if (formDoc.exists()) {
+          setFormConfig(formDoc.data());
+        } else {
+          setError('No form configured for this location yet.');
+        }
+      } catch (err) {
+        console.error("Error fetching form:", err);
+        setError('Failed to load form.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
     fetchData();
   }, [locationId]);
-
-  async function fetchData() {
-    try {
-      // Fetch Location Details
-      const locDoc = await getDoc(doc(db, 'locations', locationId));
-      if (locDoc.exists()) {
-        setLocation(locDoc.data());
-      }
-
-      // Fetch Form Configuration
-      const formDoc = await getDoc(doc(db, 'forms', locationId));
-      if (formDoc.exists()) {
-        setFormConfig(formDoc.data());
-      } else {
-        setError('No form configured for this location yet.');
-      }
-    } catch (err) {
-      console.error("Error fetching form:", err);
-      setError('Failed to load form.');
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const handleAnswerChange = (fieldId, value) => {
     setAnswers(prev => ({

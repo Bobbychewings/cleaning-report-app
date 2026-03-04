@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Image, ChevronRight, LogOut, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
