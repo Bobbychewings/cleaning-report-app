@@ -39,7 +39,7 @@ export async function sendAuditNotification(reportData, adminEmail) {
       EMAILJS_SERVICE_ID,
       EMAILJS_TEMPLATE_ID,
       templateParams,
-      EMAILJS_PUBLIC_KEY
+      { publicKey: EMAILJS_PUBLIC_KEY }
     );
 
     console.log('Email sent successfully!', response.status, response.text);
