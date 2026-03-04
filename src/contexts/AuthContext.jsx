@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        setLoading(true);
         setCurrentUser(user);
         await checkAndCreateUserDoc(user);
       } else {
