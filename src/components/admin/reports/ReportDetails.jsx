@@ -108,10 +108,15 @@ function AnswerCard({ item, isFailed }) {
 
     // Handle Image type
     if (item.type === 'image') {
+      const images = Array.isArray(item.answer) ? item.answer : [item.answer];
       return (
-        <a href={item.answer} target="_blank" rel="noopener noreferrer" className="block mt-2">
-          <img src={item.answer} alt="Audit Evidence" className="h-32 w-auto object-cover rounded border border-gray-200 shadow-sm hover:opacity-90 transition" />
-        </a>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {images.map((imgUrl, i) => (
+            <a key={i} href={imgUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={imgUrl} alt={`Audit Evidence ${i + 1}`} className="h-32 w-auto object-cover rounded border border-gray-200 shadow-sm hover:opacity-90 transition" />
+            </a>
+          ))}
+        </div>
       );
     }
 

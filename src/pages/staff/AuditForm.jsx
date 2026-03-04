@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import FormField from '../../components/staff/FormField';
 import { sendAuditNotification } from '../../lib/emailService';
+import { generatePDFBase64 } from '../../lib/pdfGenerator';
 
 export default function AuditForm() {
   const { locationId } = useParams();
@@ -57,11 +58,26 @@ export default function AuditForm() {
     const uploadedAnswers = { ...answers };
     for (const [key, value] of Object.entries(answers)) {
       if (value instanceof File) {
-        // It's an image file that needs uploading
+        // Handle single file (legacy or other fields like signature if it was a file)
         const fileRef = ref(storage, `audits/${Date.now()}_${value.name}`);
         const uploadResult = await uploadBytes(fileRef, value);
         const downloadUrl = await getDownloadURL(uploadResult.ref);
-        uploadedAnswers[key] = downloadUrl; // Replace File object with URL
+        uploadedAnswers[key] = downloadUrl;
+      } else if (Array.isArray(value)) {
+        // Handle array of files (multiple images)
+        const uploadedUrls = [];
+        for (const item of value) {
+          if (item instanceof File) {
+            const fileRef = ref(storage, `audits/${Date.now()}_${item.name}`);
+            const uploadResult = await uploadBytes(fileRef, item);
+            const downloadUrl = await getDownloadURL(uploadResult.ref);
+            uploadedUrls.push(downloadUrl);
+          } else {
+            // Already a URL string
+            uploadedUrls.push(item);
+          }
+        }
+        uploadedAnswers[key] = uploadedUrls;
       }
     }
     return uploadedAnswers;
@@ -125,12 +141,18 @@ export default function AuditForm() {
 
       const docRef = await addDoc(collection(db, 'reports'), reportData);
 
+      // Generate PDF
+      const pdfBase64DataUri = generatePDFBase64(reportData);
+
       // 4. Send Email Notification to Admin
       const settingsDoc = await getDoc(doc(db, 'settings', 'notifications'));
       const adminEmail = settingsDoc.exists() ? (settingsDoc.data().adminEmail || '') : '';
 
       if (adminEmail) {
-        await sendAuditNotification({ ...reportData, id: docRef.id }, adminEmail);
+        // Strip data:application/pdf;base64, from datauri if EmailJS requires pure base64.
+        // The EmailJS docs state "The content should be passed in base64 format or URL. In the example above the toDataURL() method returns data encoded already to base64. To encode arbitrary content to base64 use btoa() method."
+        // We will pass the full dataURI because jsPDF generates valid Data URIs.
+        await sendAuditNotification({ ...reportData, id: docRef.id }, adminEmail, pdfBase64DataUri);
       } else {
         console.warn("No admin email configured for notifications.");
       }

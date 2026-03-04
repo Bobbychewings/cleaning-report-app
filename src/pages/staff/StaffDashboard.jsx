@@ -4,6 +4,7 @@ import { db } from '../../lib/firebase';
 import { Image, ChevronRight, LogOut, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import logo from '../../assets/logo.png';
 
 export default function StaffDashboard() {
   const [locations, setLocations] = useState([]);
@@ -32,7 +33,7 @@ export default function StaffDashboard() {
       {/* Top Navigation Bar - Mobile friendly */}
       <div className="bg-white shadow-sm px-4 py-3 flex items-center justify-between sticky top-0 z-10">
         <div>
-          <h1 className="text-xl font-bold text-primary-600">Event Space App</h1>
+          <img src={logo} alt="Company Logo" className="h-8 mb-1" />
           <p className="text-xs text-gray-500">Welcome, {currentUser?.displayName || 'Staff'}</p>
         </div>
         <button
