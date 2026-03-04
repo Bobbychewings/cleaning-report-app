@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
+import { Camera, Image as ImageIcon, X } from 'lucide-react';
 
 export default function FormField({ field, value, onChange }) {
   const [toggleText, setToggleText] = useState(value?.text || '');
@@ -18,6 +19,11 @@ export default function FormField({ field, value, onChange }) {
     if (file) {
       onChange(file); // Passing File object up to parent to handle upload later
     }
+  };
+
+  const handleClearImage = (e) => {
+    e.preventDefault();
+    onChange(null);
   };
 
   const handleClearSignature = (e) => {
@@ -106,21 +112,56 @@ export default function FormField({ field, value, onChange }) {
         );
       case 'image':
         return (
-          <div className="mt-2">
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment" // Hint to mobile devices to use back camera
-              onChange={handleImageChange}
-              required={field.required && !value}
-              className="block w-full text-sm text-gray-500
-                file:mr-4 file:py-3 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-primary-50 file:text-primary-700
-                hover:file:bg-primary-100 cursor-pointer"
-            />
-            {value instanceof File && <p className="mt-2 text-sm text-green-600">✓ Image selected: {value.name}</p>}
+          <div className="mt-2 space-y-3">
+            {!value ? (
+              <div className="flex gap-3">
+                <label className="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-primary-600">
+                  <Camera size={24} className="mb-2" />
+                  <span className="text-sm font-medium">Take Photo</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+                <label className="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-primary-600">
+                  <ImageIcon size={24} className="mb-2" />
+                  <span className="text-sm font-medium">Upload Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ) : (
+              <div className="relative inline-block border rounded-lg p-2 bg-gray-50 w-full sm:w-auto">
+                <div className="relative">
+                  <img
+                    src={value instanceof File ? URL.createObjectURL(value) : value}
+                    alt="Uploaded preview"
+                    className="max-h-64 rounded object-contain mx-auto"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleClearImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                {value instanceof File && (
+                  <p className="text-xs text-center text-green-600 font-medium mt-2 truncate max-w-[200px] mx-auto">
+                    {value.name}
+                  </p>
+                )}
+              </div>
+            )}
+            {/* Hidden input to ensure HTML5 validation still triggers if required but not answered */}
+            {field.required && !value && <input type="text" required className="opacity-0 h-0 w-0 absolute -z-10" />}
           </div>
         );
       case 'signature':
@@ -201,6 +242,11 @@ export default function FormField({ field, value, onChange }) {
         {field.question}
         {field.required && <span className="text-red-500 ml-1">*</span>}
       </label>
+      {field.referenceImage && (
+        <div className="mb-3">
+          <img src={field.referenceImage} alt="Reference" className="max-w-full h-auto rounded-lg border border-gray-200" />
+        </div>
+      )}
       {renderField()}
     </div>
   );

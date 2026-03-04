@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { Plus, Trash2, GripVertical, Settings } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../lib/firebase';
+import { Plus, Trash2, GripVertical, Settings, Image as ImageIcon } from 'lucide-react';
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Short Text' },
@@ -10,7 +11,8 @@ const FIELD_TYPES = [
   { value: 'mcq', label: 'Multiple Choice' },
   { value: 'image', label: 'Image Upload' },
   { value: 'signature', label: 'Signature Pad' },
-  { value: 'toggle_text', label: 'Toggle with Text (If Yes/No)' }
+  { value: 'toggle_text', label: 'Toggle with Text (If Yes/No)' },
+  { value: 'section', label: 'Section Header' }
 ];
 
 export default function FormBuilder() {
@@ -89,9 +91,23 @@ export default function FormBuilder() {
       required: true,
       options: [], // For MCQ
       expectedAnswer: '', // To trigger "fail" state
-      failCondition: '' // E.g., 'no' for Yes/No, or specific text
+      failCondition: '', // E.g., 'no' for Yes/No, or specific text
+      referenceImage: '' // URL for reference image
     };
     setFields([...fields, newField]);
+  };
+
+  const uploadReferenceImage = async (fieldId, file) => {
+    if (!file) return;
+    try {
+      const fileRef = ref(storage, `form_references/${Date.now()}_${file.name}`);
+      const uploadResult = await uploadBytes(fileRef, file);
+      const downloadUrl = await getDownloadURL(uploadResult.ref);
+      updateField(fieldId, 'referenceImage', downloadUrl);
+    } catch (error) {
+      console.error("Error uploading reference image:", error);
+      alert("Failed to upload image.");
+    }
   };
 
   const removeField = (id) => {
@@ -199,12 +215,41 @@ export default function FormBuilder() {
                     </div>
                   )}
 
-                  {/* Failure Conditions / Expected Answer settings */}
-                  <div className="bg-white p-3 rounded border border-gray-200 mt-4 flex flex-wrap gap-4 items-center">
-                    <div className="flex items-center gap-2">
-                      <Settings size={16} className="text-gray-400"/>
-                      <span className="text-sm font-medium text-gray-700">Health Score Settings:</span>
+                  {/* Reference Image Upload */}
+                  {field.type !== 'section' && (
+                    <div className="flex items-center gap-4 mt-2">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-primary-600 transition">
+                        <ImageIcon size={18} />
+                        <span>{field.referenceImage ? 'Change Reference Image' : 'Add Reference Image'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => uploadReferenceImage(field.id, e.target.files[0])}
+                        />
+                      </label>
+                      {field.referenceImage && (
+                        <div className="flex items-center gap-2">
+                          <img src={field.referenceImage} alt="Reference Preview" className="h-10 w-10 object-cover rounded border" />
+                          <button
+                            type="button"
+                            onClick={() => updateField(field.id, 'referenceImage', '')}
+                            className="text-xs text-red-500 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
                     </div>
+                  )}
+
+                  {/* Failure Conditions / Expected Answer settings */}
+                  {field.type !== 'section' && (
+                    <div className="bg-white p-3 rounded border border-gray-200 mt-4 flex flex-wrap gap-4 items-center">
+                      <div className="flex items-center gap-2">
+                        <Settings size={16} className="text-gray-400"/>
+                        <span className="text-sm font-medium text-gray-700">Health Score Settings:</span>
+                      </div>
 
                     {field.type === 'yes_no' && (
                       <div className="flex items-center gap-2">
@@ -237,18 +282,19 @@ export default function FormBuilder() {
                       </div>
                     )}
 
-                    <div className="flex-1"></div>
+                      <div className="flex-1"></div>
 
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={field.required}
-                        onChange={(e) => updateField(field.id, 'required', e.target.checked)}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-sm text-gray-700">Required Field</span>
-                    </label>
-                  </div>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={field.required}
+                          onChange={(e) => updateField(field.id, 'required', e.target.checked)}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-gray-700">Required Field</span>
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 <button
