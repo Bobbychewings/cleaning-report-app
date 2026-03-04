@@ -6,6 +6,7 @@ import Login from './pages/auth/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import AuditForm from './pages/staff/AuditForm';
+import SignUp from './pages/auth/SignUp';
 
 // Temporary placeholder components
 const Unauthorized = () => <div>Unauthorized access. <SignOutButton /></div>;
@@ -29,6 +30,7 @@ function Home() {
 function App() {
   return (
     <Routes>
+      <Route path="/signup" element={<SignUp />} />
       <Route path="/login" element={<Login />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
 
