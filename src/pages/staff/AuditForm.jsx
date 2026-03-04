@@ -19,6 +19,7 @@ export default function AuditForm() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
 
   useEffect(() => {
     async function fetchData() {
@@ -35,6 +36,12 @@ export default function AuditForm() {
           setFormConfig(formDoc.data());
         } else {
           setError('No form configured for this location yet.');
+        }
+
+        // Fetch Admin Email Settings
+        const settingsDoc = await getDoc(doc(db, 'settings', 'notifications'));
+        if (settingsDoc.exists()) {
+          setAdminEmail(settingsDoc.data().adminEmail || '');
         }
       } catch (err) {
         console.error("Error fetching form:", err);
@@ -127,9 +134,11 @@ export default function AuditForm() {
       const docRef = await addDoc(collection(db, 'reports'), reportData);
 
       // 4. Send Email Notification to Admin
-      // TODO: Ideally, we fetch the admin emails from the users collection here
-      // For now, we will attempt to send to a placeholder email or log the intent.
-      await sendAuditNotification({ ...reportData, id: docRef.id }, "admin@eventspace.com");
+      if (adminEmail) {
+        await sendAuditNotification({ ...reportData, id: docRef.id }, adminEmail);
+      } else {
+        console.warn("No admin email configured for notifications.");
+      }
 
       // 5. Success UI & Redirect
       alert('Audit submitted successfully! Health Score: ' + healthScore + '%');
@@ -169,12 +178,18 @@ export default function AuditForm() {
             </div>
 
             {formConfig?.fields?.map((field) => (
-              <FormField
-                key={field.id}
-                field={field}
-                value={answers[field.id]}
-                onChange={(val) => handleAnswerChange(field.id, val)}
-              />
+              field.type === 'section' ? (
+                <div key={field.id} className="pt-6 pb-2 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900">{field.question}</h2>
+                </div>
+              ) : (
+                <FormField
+                  key={field.id}
+                  field={field}
+                  value={answers[field.id]}
+                  onChange={(val) => handleAnswerChange(field.id, val)}
+                />
+              )
             ))}
 
             {/* Sticky Submit Button for Mobile */}

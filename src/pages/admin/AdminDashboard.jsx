@@ -4,7 +4,8 @@ import LocationManager from '../../components/admin/LocationManager';
 import FormBuilder from '../../components/admin/FormBuilder';
 import UserManagement from '../../components/UserManagement';
 import ReportsManager from '../../components/admin/reports/ReportsManager';
-import { LogOut, Map, ClipboardList, Users, FileBarChart } from 'lucide-react';
+import Settings from '../../components/admin/Settings';
+import { LogOut, Map, ClipboardList, Users, FileBarChart, Settings as SettingsIcon } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { signOut, currentUser } = useAuth();
@@ -15,6 +16,7 @@ export default function AdminDashboard() {
     { id: 'forms', label: 'Form Builder', icon: ClipboardList },
     { id: 'reports', label: 'Audit Reports', icon: FileBarChart },
     { id: 'users', label: 'Staff Management', icon: Users },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
   return (
@@ -89,6 +91,7 @@ export default function AdminDashboard() {
             {activeTab === 'forms' && <FormBuilder />}
             {activeTab === 'reports' && <ReportsManager />}
             {activeTab === 'users' && <UserManagement />}
+            {activeTab === 'settings' && <Settings />}
           </main>
         </div>
       </div>
