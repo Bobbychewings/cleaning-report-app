@@ -19,8 +19,6 @@ export default function AuditForm() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [adminEmail, setAdminEmail] = useState('');
-
   useEffect(() => {
     async function fetchData() {
       try {
@@ -36,12 +34,6 @@ export default function AuditForm() {
           setFormConfig(formDoc.data());
         } else {
           setError('No form configured for this location yet.');
-        }
-
-        // Fetch Admin Email Settings
-        const settingsDoc = await getDoc(doc(db, 'settings', 'notifications'));
-        if (settingsDoc.exists()) {
-          setAdminEmail(settingsDoc.data().adminEmail || '');
         }
       } catch (err) {
         console.error("Error fetching form:", err);
@@ -134,6 +126,9 @@ export default function AuditForm() {
       const docRef = await addDoc(collection(db, 'reports'), reportData);
 
       // 4. Send Email Notification to Admin
+      const settingsDoc = await getDoc(doc(db, 'settings', 'notifications'));
+      const adminEmail = settingsDoc.exists() ? (settingsDoc.data().adminEmail || '') : '';
+
       if (adminEmail) {
         await sendAuditNotification({ ...reportData, id: docRef.id }, adminEmail);
       } else {
