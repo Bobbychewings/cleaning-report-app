@@ -23,6 +23,7 @@ export default function FormBuilder() {
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(null);
 
   useEffect(() => {
     fetchLocations();
@@ -101,6 +102,7 @@ export default function FormBuilder() {
 
   const uploadReferenceImage = async (fieldId, file) => {
     if (!file) return;
+    setUploadingImage(fieldId);
     try {
       const fileRef = ref(storage, `form_references/${Date.now()}_${file.name}`);
       const uploadResult = await uploadBytes(fileRef, file);
@@ -109,6 +111,8 @@ export default function FormBuilder() {
     } catch (error) {
       console.error("Error uploading reference image:", error);
       alert("Failed to upload image.");
+    } finally {
+      setUploadingImage(null);
     }
   };
 
@@ -243,17 +247,32 @@ export default function FormBuilder() {
                   {/* Reference Image Upload */}
                   {field.type !== 'section' && (
                     <div className="flex items-center gap-4 mt-2">
-                      <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-primary-600 transition">
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById(`ref-image-upload-${field.id}`).click()}
+                        className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 hover:text-primary-600 transition disabled:opacity-50"
+                        disabled={uploadingImage === field.id}
+                      >
                         <ImageIcon size={18} />
-                        <span>{field.referenceImage ? 'Change Reference Image' : 'Add Reference Image'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => uploadReferenceImage(field.id, e.target.files[0])}
-                        />
-                      </label>
-                      {field.referenceImage && (
+                        <span>
+                          {uploadingImage === field.id
+                            ? 'Uploading...'
+                            : field.referenceImage
+                            ? 'Change Reference Image'
+                            : 'Add Reference Image'}
+                        </span>
+                      </button>
+                      <input
+                        id={`ref-image-upload-${field.id}`}
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={(e) => {
+                          uploadReferenceImage(field.id, e.target.files[0]);
+                          e.target.value = null; // Reset input so same file can be selected again
+                        }}
+                      />
+                      {field.referenceImage && uploadingImage !== field.id && (
                         <div className="flex items-center gap-2">
                           <img src={field.referenceImage} alt="Reference Preview" className="h-10 w-10 object-cover rounded border" />
                           <button
