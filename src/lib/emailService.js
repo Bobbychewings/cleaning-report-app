@@ -31,7 +31,7 @@ export async function sendAuditNotification(reportData, adminEmail) {
       total_checks: reportData.totalChecks,
       failed_checks: reportData.failedChecks,
       submission_time: new Date().toLocaleString(),
-      report_link: `${window.location.origin}/admin`
+      report_link: new URL('/admin', window.location.href).href
     };
 
     const response = await emailjs.send(
