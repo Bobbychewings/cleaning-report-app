@@ -1,10 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, FileSignature, Download, MessageSquare, ImageIcon } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle, FileSignature, Download, MessageSquare, ImageIcon, Loader2 } from 'lucide-react';
 import { downloadPDF } from '../../../lib/pdfGenerator';
 
 export default function ReportDetails({ report, onBack }) {
+  const [isExporting, setIsExporting] = useState(false);
+
   if (!report) return null;
+
+  const handleExportPDF = async () => {
+    try {
+      setIsExporting(true);
+      await downloadPDF(report);
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const dateStr = report.submittedAt ? format(report.submittedAt.toDate(), 'PPP p') : 'Unknown Date';
 
@@ -34,11 +48,12 @@ export default function ReportDetails({ report, onBack }) {
         {/* Export PDF Button */}
         <div className="flex gap-4 items-center">
           <button
-            onClick={() => downloadPDF(report)}
-            className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download size={18} />
-            <span className="hidden sm:inline">Export PDF</span>
+            {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}
+            <span className="hidden sm:inline">{isExporting ? 'Exporting...' : 'Export PDF'}</span>
           </button>
 
         {/* Health Score Badge */}
