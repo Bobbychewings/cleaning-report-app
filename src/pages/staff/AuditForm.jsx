@@ -16,6 +16,8 @@ export default function AuditForm() {
   const [location, setLocation] = useState(null);
   const [formConfig, setFormConfig] = useState(null);
   const [answers, setAnswers] = useState({});
+  const [extraImages, setExtraImages] = useState({});
+  const [comments, setComments] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -53,8 +55,25 @@ export default function AuditForm() {
     }));
   };
 
+  const handleExtraImagesChange = (fieldId, images) => {
+    setExtraImages(prev => ({
+      ...prev,
+      [fieldId]: images
+    }));
+  };
+
+  const handleCommentChange = (fieldId, comment) => {
+    setComments(prev => ({
+      ...prev,
+      [fieldId]: comment
+    }));
+  };
+
   const uploadImages = async () => {
     const uploadedAnswers = { ...answers };
+    const uploadedExtraImages = { ...extraImages };
+
+    // Upload main answers (if they are images)
     for (const [key, value] of Object.entries(answers)) {
       if (value instanceof File) {
         // Handle single file (legacy or other fields like signature if it was a file)
@@ -79,7 +98,26 @@ export default function AuditForm() {
         uploadedAnswers[key] = uploadedUrls;
       }
     }
-    return uploadedAnswers;
+
+    // Upload extra attached images
+    for (const [key, value] of Object.entries(extraImages)) {
+      if (Array.isArray(value)) {
+        const uploadedUrls = [];
+        for (const item of value) {
+          if (item instanceof File) {
+            const fileRef = ref(storage, `audits/${Date.now()}_extra_${item.name}`);
+            const uploadResult = await uploadBytes(fileRef, item);
+            const downloadUrl = await getDownloadURL(uploadResult.ref);
+            uploadedUrls.push(downloadUrl);
+          } else {
+            uploadedUrls.push(item);
+          }
+        }
+        uploadedExtraImages[key] = uploadedUrls;
+      }
+    }
+
+    return { finalAnswers: uploadedAnswers, finalExtraImages: uploadedExtraImages };
   };
 
   const handleSubmit = async (e) => {
@@ -89,7 +127,7 @@ export default function AuditForm() {
 
     try {
       // 1. Upload any images first
-      const finalAnswers = await uploadImages();
+      const { finalAnswers, finalExtraImages } = await uploadImages();
 
       // 2. Calculate initial pass/fail status per question
       let totalQuestionsWithExpectation = 0;
@@ -98,9 +136,11 @@ export default function AuditForm() {
 
       formConfig.fields.forEach(field => {
         const answer = finalAnswers[field.id];
+        const extraImgs = finalExtraImages[field.id] || [];
+        const commentTxt = comments[field.id] || '';
         let passed = true; // Assume pass unless proven otherwise
 
-        if (field.expectedAnswer) {
+        if (field.expectedAnswer && field.type !== 'section') {
           totalQuestionsWithExpectation++;
           // Basic comparison for yes/no and mcq
           if (field.type === 'yes_no' || field.type === 'mcq') {
@@ -115,7 +155,9 @@ export default function AuditForm() {
           question: field.question,
           type: field.type,
           answer: answer !== undefined ? answer : null,
-          passed: passed
+          passed: passed,
+          images: extraImgs,
+          comment: commentTxt
         };
       });
 
@@ -188,18 +230,16 @@ export default function AuditForm() {
             </div>
 
             {formConfig?.fields?.map((field) => (
-              field.type === 'section' ? (
-                <div key={field.id} className="pt-6 pb-2 border-b border-gray-200">
-                  <h2 className="text-xl font-bold text-gray-900">{field.question}</h2>
-                </div>
-              ) : (
-                <FormField
-                  key={field.id}
-                  field={field}
-                  value={answers[field.id]}
-                  onChange={(val) => handleAnswerChange(field.id, val)}
-                />
-              )
+              <FormField
+                key={field.id}
+                field={field}
+                value={answers[field.id]}
+                onChange={(val) => handleAnswerChange(field.id, val)}
+                images={extraImages[field.id]}
+                onImagesChange={(imgs) => handleExtraImagesChange(field.id, imgs)}
+                comment={comments[field.id]}
+                onCommentChange={(txt) => handleCommentChange(field.id, txt)}
+              />
             ))}
 
             {/* Sticky Submit Button for Mobile */}

@@ -9,6 +9,7 @@ const FIELD_TYPES = [
   { value: 'textarea', label: 'Long Text' },
   { value: 'yes_no', label: 'Yes/No' },
   { value: 'mcq', label: 'Multiple Choice' },
+  { value: 'checkbox', label: 'Checkboxes (Multiple Select)' },
   { value: 'image', label: 'Image Upload' },
   { value: 'signature', label: 'Signature Pad' },
   { value: 'toggle_text', label: 'Toggle with Text (If Yes/No)' },
@@ -196,13 +197,13 @@ export default function FormBuilder() {
                     </select>
                   </div>
 
-                  {/* MCQ Options Builder */}
-                  {field.type === 'mcq' && (
+                  {/* Options Builder */}
+                  {(field.type === 'mcq' || field.type === 'checkbox') && (
                     <div className="ml-4 space-y-2">
                       <label className="text-sm font-medium text-gray-700">Options</label>
                       {(field.options || []).map((opt, oIdx) => (
                         <div key={oIdx} className="flex gap-2 items-center">
-                          <div className="w-4 h-4 rounded-full border border-gray-300"></div>
+                          <div className={`w-4 h-4 border border-gray-300 ${field.type === 'mcq' ? 'rounded-full' : 'rounded-sm'}`}></div>
                           <input
                             type="text"
                             value={opt}

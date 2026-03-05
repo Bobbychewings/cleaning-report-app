@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import LocationManager from '../../components/admin/LocationManager';
 import FormBuilder from '../../components/admin/FormBuilder';
@@ -10,7 +11,17 @@ import logo from '../../assets/logo.png';
 
 export default function AdminDashboard() {
   const { signOut, currentUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('locations');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialReportId = queryParams.get('reportId');
+
+  const [activeTab, setActiveTab] = useState(initialReportId ? 'reports' : 'locations');
+
+  useEffect(() => {
+    if (initialReportId) {
+      setActiveTab('reports');
+    }
+  }, [initialReportId]);
 
   const tabs = [
     { id: 'locations', label: 'Locations', icon: Map },
@@ -91,7 +102,7 @@ export default function AdminDashboard() {
           <main>
             {activeTab === 'locations' && <LocationManager />}
             {activeTab === 'forms' && <FormBuilder />}
-            {activeTab === 'reports' && <ReportsManager />}
+            {activeTab === 'reports' && <ReportsManager initialReportId={initialReportId} />}
             {activeTab === 'users' && <UserManagement />}
             {activeTab === 'settings' && <Settings />}
           </main>
