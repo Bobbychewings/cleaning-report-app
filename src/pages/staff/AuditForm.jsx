@@ -7,7 +7,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import FormField from '../../components/staff/FormField';
 import { sendAuditNotification } from '../../lib/emailService';
-import { generatePDFBase64 } from '../../lib/pdfGenerator';
 
 export default function AuditForm() {
   const { locationId } = useParams();
@@ -141,18 +140,12 @@ export default function AuditForm() {
 
       const docRef = await addDoc(collection(db, 'reports'), reportData);
 
-      // Generate PDF
-      const pdfBase64DataUri = generatePDFBase64(reportData);
-
       // 4. Send Email Notification to Admin
       const settingsDoc = await getDoc(doc(db, 'settings', 'notifications'));
       const adminEmail = settingsDoc.exists() ? (settingsDoc.data().adminEmail || '') : '';
 
       if (adminEmail) {
-        // Strip data:application/pdf;base64, from datauri if EmailJS requires pure base64.
-        // The EmailJS docs state "The content should be passed in base64 format or URL. In the example above the toDataURL() method returns data encoded already to base64. To encode arbitrary content to base64 use btoa() method."
-        // We will pass the full dataURI because jsPDF generates valid Data URIs.
-        await sendAuditNotification({ ...reportData, id: docRef.id }, adminEmail, pdfBase64DataUri);
+        await sendAuditNotification({ ...reportData, id: docRef.id }, adminEmail);
       } else {
         console.warn("No admin email configured for notifications.");
       }
