@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
-import { Camera, Image as ImageIcon, X } from 'lucide-react';
+import { Camera, Image as ImageIcon, X, Paperclip, MessageSquare } from 'lucide-react';
 
-export default function FormField({ field, value, onChange }) {
+export default function FormField({ field, value, onChange, images = [], onImagesChange, comment = '', onCommentChange }) {
   const [toggleText, setToggleText] = useState(value?.text || '');
   const [toggleValue, setToggleValue] = useState(value?.toggle || '');
   const sigCanvas = useRef(null);
@@ -42,6 +42,8 @@ export default function FormField({ field, value, onChange }) {
     }
   };
 
+  const [showCommentInput, setShowCommentInput] = useState(false);
+
   const handleEndSignature = () => {
     if (sigCanvas.current) {
       if(sigCanvas.current.isEmpty()){
@@ -50,6 +52,21 @@ export default function FormField({ field, value, onChange }) {
         onChange(sigCanvas.current.toDataURL()); // Save as base64 string
       }
     }
+  };
+
+  const handleExtraImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newImages = [...images, ...files].slice(0, 10);
+      if (onImagesChange) onImagesChange(newImages);
+    }
+  };
+
+  const handleRemoveExtraImage = (e, index) => {
+    e.preventDefault();
+    const newImages = [...images];
+    newImages.splice(index, 1);
+    if (onImagesChange) onImagesChange(newImages);
   };
 
   const renderField = () => {
@@ -118,6 +135,38 @@ export default function FormField({ field, value, onChange }) {
             ))}
           </div>
         );
+      case 'checkbox': {
+        const selectedValues = Array.isArray(value) ? value : [];
+        return (
+          <div className="space-y-2 mt-2">
+            {(field.options || []).map((opt, i) => {
+              const isChecked = selectedValues.includes(opt);
+              return (
+                <label key={i} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) => {
+                      let newValues;
+                      if (e.target.checked) {
+                        newValues = [...selectedValues, opt];
+                      } else {
+                        newValues = selectedValues.filter((v) => v !== opt);
+                      }
+                      onChange(newValues.length > 0 ? newValues : null);
+                    }}
+                    className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                  />
+                  <span className="text-gray-700">{opt}</span>
+                </label>
+              );
+            })}
+            {field.required && selectedValues.length === 0 && (
+              <input type="checkbox" required className="opacity-0 absolute -z-10" />
+            )}
+          </div>
+        );
+      }
       case 'image': {
         const currentImages = Array.isArray(value) ? value : (value ? [value] : []);
         return (
@@ -252,6 +301,78 @@ export default function FormField({ field, value, onChange }) {
     }
   };
 
+  const renderExtraActions = () => {
+    return (
+      <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          <label className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-md text-sm font-medium text-gray-700 cursor-pointer transition-colors">
+            <Paperclip size={16} className="text-gray-500" />
+            Attach Photo
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleExtraImageChange}
+              className="hidden"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowCommentInput(!showCommentInput);
+            }}
+            className={`flex items-center gap-2 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors ${
+              showCommentInput || comment ? 'bg-primary-50 border-primary-200 text-primary-700' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-700'
+            }`}
+          >
+            <MessageSquare size={16} className={showCommentInput || comment ? 'text-primary-600' : 'text-gray-500'} />
+            Add Comment
+          </button>
+        </div>
+
+        {images && images.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {images.map((img, index) => (
+              <div key={index} className="relative inline-block">
+                <img
+                  src={img instanceof File ? URL.createObjectURL(img) : img}
+                  alt={`Attachment ${index + 1}`}
+                  className="h-16 w-16 object-cover rounded border border-gray-200 shadow-sm"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => handleRemoveExtraImage(e, index)}
+                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 shadow-sm hover:bg-red-600"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(showCommentInput || comment) && (
+          <textarea
+            placeholder="Add a comment to explain..."
+            className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 py-2 px-3 h-20"
+            value={comment}
+            onChange={(e) => { if (onCommentChange) onCommentChange(e.target.value); }}
+          />
+        )}
+      </div>
+    );
+  };
+
+  if (field.type === 'section') {
+    return (
+      <div className="pt-6 pb-2 border-b-2 border-gray-200 mb-6 group">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">{field.question}</h2>
+        {renderExtraActions()}
+      </div>
+    );
+  }
+
   return (
     <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
       <label className="block text-base font-medium text-gray-900 mb-1">
@@ -264,6 +385,7 @@ export default function FormField({ field, value, onChange }) {
         </div>
       )}
       {renderField()}
+      {field.type !== 'image' && renderExtraActions()}
     </div>
   );
 }

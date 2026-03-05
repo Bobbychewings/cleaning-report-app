@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-export const generatePDFBase64 = (reportData) => {
+const createPDFDoc = (reportData) => {
   const doc = new jsPDF();
 
   // Title
@@ -27,8 +27,21 @@ export const generatePDFBase64 = (reportData) => {
   const tableData = [];
 
   for (const [key, result] of Object.entries(reportData.answers || {})) {
+    if (result.type === 'section') {
+      let sectionText = result.question || key;
+      if (result.comment) sectionText += `\nComment: ${result.comment}`;
+      if (result.images && result.images.length > 0) sectionText += `\n[${result.images.length} Image(s) Attached]`;
+
+      tableData.push([
+        { content: sectionText, colSpan: 3, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }
+      ]);
+      continue;
+    }
+
     let answerText = result.answer;
-    if (Array.isArray(result.answer)) {
+    if (result.type === 'checkbox' && Array.isArray(result.answer)) {
+      answerText = result.answer.join(', ');
+    } else if (Array.isArray(result.answer)) {
       answerText = `[${result.answer.length} Images Uploaded]`;
     } else if (result.type === 'image' && result.answer) {
       answerText = '[Image Uploaded]';
@@ -36,6 +49,13 @@ export const generatePDFBase64 = (reportData) => {
       answerText = '[Signature Provided]';
     } else if (result.type === 'toggle_text') {
       answerText = `${result.answer?.toggle} - ${result.answer?.text}`;
+    }
+
+    if (result.comment) {
+      answerText += `\nComment: ${result.comment}`;
+    }
+    if (result.images && result.images.length > 0) {
+      answerText += `\n[${result.images.length} Image(s) Attached]`;
     }
 
     tableData.push([
@@ -53,8 +73,16 @@ export const generatePDFBase64 = (reportData) => {
     headStyles: { fillColor: [37, 99, 235] } // Using #2563eb blue to match new theme
   });
 
-  // Get base64 string
-  const pdfBase64 = doc.output('datauristring');
+  return doc;
+};
 
-  return pdfBase64;
+export const generatePDFBase64 = (reportData) => {
+  const doc = createPDFDoc(reportData);
+  return doc.output('datauristring');
+};
+
+export const downloadPDF = (reportData) => {
+  const doc = createPDFDoc(reportData);
+  const dateStr = reportData.submittedAt instanceof Date ? reportData.submittedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+  doc.save(`Audit_Report_${reportData.locationName.replace(/\s+/g, '_')}_${dateStr}.pdf`);
 };

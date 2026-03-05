@@ -4,14 +4,14 @@ import { db } from '../../../lib/firebase';
 import { format } from 'date-fns';
 import { FileText, AlertTriangle, CheckCircle, Search } from 'lucide-react';
 
-export default function ReportsList({ onSelectReport }) {
+export default function ReportsList({ onSelectReport, initialReportId }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, [initialReportId]);
 
   async function fetchReports() {
     try {
@@ -22,6 +22,12 @@ export default function ReportsList({ onSelectReport }) {
         ...doc.data()
       }));
       setReports(reportsList);
+      if (initialReportId) {
+        const initialReport = reportsList.find(r => r.id === initialReportId);
+        if (initialReport) {
+          onSelectReport(initialReport);
+        }
+      }
     } catch (error) {
       console.error("Error fetching reports: ", error);
     } finally {
