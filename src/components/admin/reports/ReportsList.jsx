@@ -10,30 +10,31 @@ export default function ReportsList({ onSelectReport, initialReportId }) {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchReports();
-  }, [initialReportId]);
+    async function fetchReports() {
+      try {
+        const q = query(collection(db, 'reports'), orderBy('submittedAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const reportsList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setReports(reportsList);
 
-  async function fetchReports() {
-    try {
-      const q = query(collection(db, 'reports'), orderBy('submittedAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const reportsList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setReports(reportsList);
-      if (initialReportId) {
-        const initialReport = reportsList.find(r => r.id === initialReportId);
-        if (initialReport) {
-          onSelectReport(initialReport);
+        if (initialReportId) {
+          const report = reportsList.find(r => r.id === initialReportId);
+          if (report) {
+            onSelectReport(report);
+          }
         }
+      } catch (error) {
+        console.error("Error fetching reports: ", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching reports: ", error);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    fetchReports();
+  }, [initialReportId, onSelectReport]);
 
   const filteredReports = reports.filter(r =>
     r.locationName.toLowerCase().includes(searchTerm.toLowerCase()) ||

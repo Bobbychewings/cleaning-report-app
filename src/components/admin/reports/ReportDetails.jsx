@@ -9,13 +9,11 @@ export default function ReportDetails({ report, onBack }) {
   const dateStr = report.submittedAt ? format(report.submittedAt.toDate(), 'PPP p') : 'Unknown Date';
 
   // Convert answers object to array for easier rendering
-  const answersList = Object.entries(report.answers || {}).map(([id, data]) => ({
-    id,
-    ...data
-  }));
+  const answersList = Object.entries(report.answers || {})
+    .map(([id, data]) => ({ id, ...data }))
+    .sort((a, b) => a.id.localeCompare(b.id));
 
-  const failedItems = answersList.filter(item => item.passed === false);
-  const passedItems = answersList.filter(item => item.passed === true);
+  const failedItems = answersList.filter(item => item.passed === false && item.type !== 'section');
 
   return (
     <div className="bg-white shadow rounded-lg p-6 mt-6 max-w-4xl mx-auto">
@@ -91,18 +89,18 @@ export default function ReportDetails({ report, onBack }) {
         </div>
       )}
 
-      {/* Passed/Other Items */}
+      {/* Full Audit Details */}
       <div className="mb-8">
         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
           <CheckCircle2 className="text-green-500" size={24} />
-          Passed & Other Checks
+          Full Audit Details
         </h3>
-        {passedItems.length === 0 ? (
-          <p className="text-gray-500 italic">No passing items recorded.</p>
+        {answersList.length === 0 ? (
+          <p className="text-gray-500 italic">No items recorded.</p>
         ) : (
           <div className="space-y-4">
-            {passedItems.map(item => (
-              <AnswerCard key={item.id} item={item} isFailed={false} />
+            {answersList.map(item => (
+              <AnswerCard key={item.id} item={item} isFailed={item.passed === false && item.type !== 'section'} />
             ))}
           </div>
         )}
@@ -203,8 +201,7 @@ function AnswerCard({ item, isFailed }) {
   if (item.type === 'section') {
     return (
       <div className="pt-4 pb-2 border-b-2 border-gray-200 mt-6 mb-2">
-        <h4 className="font-bold text-xl text-gray-900">{item.question}</h4>
-        {renderExtraAttachments()}
+        <h4 className="font-bold text-2xl text-gray-900">{item.question}</h4>
       </div>
     );
   }
