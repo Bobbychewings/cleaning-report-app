@@ -19,6 +19,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (initialReportId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab('reports');
     }
   }, [initialReportId]);
