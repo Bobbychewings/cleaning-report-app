@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const generatePDFBase64 = (reportData) => {
   const doc = new jsPDF();
@@ -45,7 +45,7 @@ export const generatePDFBase64 = (reportData) => {
     ]);
   }
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 85,
     head: [['Question', 'Answer', 'Status']],
     body: tableData,
