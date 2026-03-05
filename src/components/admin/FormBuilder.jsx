@@ -3,6 +3,7 @@ import { collection, doc, setDoc, getDoc, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { Plus, Trash2, GripVertical, Settings, Image as ImageIcon } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const FIELD_TYPES = [
   { value: 'text', label: 'Short Text' },
@@ -139,6 +140,16 @@ export default function FormBuilder() {
     }));
   };
 
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(fields);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setFields(items);
+  };
+
   if (loading && locations.length === 0) return <div>Loading Builder...</div>;
 
   return (
@@ -170,12 +181,25 @@ export default function FormBuilder() {
         <div className="text-center py-10 text-gray-500">Please select or add a location first to build its form.</div>
       ) : (
         <div className="space-y-6">
-          {fields.map((field) => (
-            <div key={field.id} className={`border border-gray-200 rounded-lg p-4 relative group ${field.type === 'section' ? 'bg-gray-100 border-l-4 border-l-gray-400' : 'bg-gray-50'}`}>
-              <div className="flex items-start gap-4">
-                <div className="cursor-move text-gray-400 mt-2">
-                  <GripVertical size={20} />
-                </div>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="fields-list">
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-6">
+                  {fields.map((field, index) => (
+                    <Draggable key={String(field.id)} draggableId={String(field.id)} index={index}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`border border-gray-200 rounded-lg p-4 relative group ${field.type === 'section' ? 'bg-gray-100 border-l-4 border-l-gray-400' : 'bg-gray-50'} ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary-500 opacity-90' : ''}`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div
+                              {...provided.dragHandleProps}
+                              className="cursor-grab active:cursor-grabbing text-gray-400 mt-2 hover:text-gray-600 p-1"
+                            >
+                              <GripVertical size={20} />
+                            </div>
 
                 <div className="flex-1 space-y-4">
                   <div className="flex gap-4">
@@ -306,8 +330,15 @@ export default function FormBuilder() {
                   <Trash2 size={20} />
                 </button>
               </div>
-            </div>
-          ))}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
 
           <div className="flex gap-4">
             <button
