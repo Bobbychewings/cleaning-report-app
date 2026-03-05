@@ -6,6 +6,7 @@ import UserManagement from '../../components/UserManagement';
 import ReportsManager from '../../components/admin/reports/ReportsManager';
 import Settings from '../../components/admin/Settings';
 import { LogOut, Map, ClipboardList, Users, FileBarChart, Settings as SettingsIcon } from 'lucide-react';
+import logo from '../../assets/logo.png';
 
 export default function AdminDashboard() {
   const { signOut, currentUser } = useAuth();
@@ -24,8 +25,9 @@ export default function AdminDashboard() {
       {/* Sidebar Navigation */}
       <div className="w-full md:w-64 bg-white shadow-md flex-shrink-0">
         <div className="h-full flex flex-col">
-          <div className="px-6 py-8 border-b border-gray-100 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-primary-600">Admin Panel</h1>
+          <div className="px-6 py-8 border-b border-gray-100 flex flex-col items-center justify-center">
+            <img src={logo} alt="Company Logo" className="h-12 mb-2 object-contain" />
+            <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
           </div>
 
           <div className="p-4 flex-1">

@@ -15,15 +15,23 @@ export default function FormField({ field, value, onChange }) {
   }, [field.type, value]);
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      onChange(file); // Passing File object up to parent to handle upload later
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const currentValues = Array.isArray(value) ? value : (value ? [value] : []);
+      const newValues = [...currentValues, ...files].slice(0, 10); // Limit to 10
+      onChange(newValues.length > 0 ? newValues : null);
     }
   };
 
-  const handleClearImage = (e) => {
+  const handleRemoveImage = (e, index) => {
     e.preventDefault();
-    onChange(null);
+    if (Array.isArray(value)) {
+      const newValues = [...value];
+      newValues.splice(index, 1);
+      onChange(newValues.length > 0 ? newValues : null);
+    } else {
+      onChange(null);
+    }
   };
 
   const handleClearSignature = (e) => {
@@ -110,10 +118,11 @@ export default function FormField({ field, value, onChange }) {
             ))}
           </div>
         );
-      case 'image':
+      case 'image': {
+        const currentImages = Array.isArray(value) ? value : (value ? [value] : []);
         return (
           <div className="mt-2 space-y-3">
-            {!value ? (
+            {currentImages.length < 10 && (
               <div className="flex gap-3">
                 <label className="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-primary-600">
                   <Camera size={24} className="mb-2" />
@@ -122,48 +131,55 @@ export default function FormField({ field, value, onChange }) {
                     type="file"
                     accept="image/*"
                     capture="environment"
+                    multiple
                     onChange={handleImageChange}
                     className="hidden"
                   />
                 </label>
                 <label className="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors text-primary-600">
                   <ImageIcon size={24} className="mb-2" />
-                  <span className="text-sm font-medium">Upload Image</span>
+                  <span className="text-sm font-medium">Upload Image(s)</span>
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleImageChange}
                     className="hidden"
                   />
                 </label>
               </div>
-            ) : (
-              <div className="relative inline-block border rounded-lg p-2 bg-gray-50 w-full sm:w-auto">
-                <div className="relative">
-                  <img
-                    src={value instanceof File ? URL.createObjectURL(value) : value}
-                    alt="Uploaded preview"
-                    className="max-h-64 rounded object-contain mx-auto"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleClearImage}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-                {value instanceof File && (
-                  <p className="text-xs text-center text-green-600 font-medium mt-2 truncate max-w-[200px] mx-auto">
-                    {value.name}
-                  </p>
-                )}
+            )}
+
+            {currentImages.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {currentImages.map((img, index) => (
+                  <div key={index} className="relative border rounded-lg p-2 bg-gray-50">
+                    <img
+                      src={img instanceof File ? URL.createObjectURL(img) : img}
+                      alt={`Uploaded preview ${index + 1}`}
+                      className="h-32 w-full object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => handleRemoveImage(e, index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition"
+                    >
+                      <X size={16} />
+                    </button>
+                    {img instanceof File && (
+                      <p className="text-xs text-center text-green-600 font-medium mt-2 truncate">
+                        {img.name}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
             {/* Hidden input to ensure HTML5 validation still triggers if required but not answered */}
-            {field.required && !value && <input type="text" required className="opacity-0 h-0 w-0 absolute -z-10" />}
+            {field.required && currentImages.length === 0 && <input type="text" required className="opacity-0 h-0 w-0 absolute -z-10" />}
           </div>
         );
+      }
       case 'signature':
         return (
           <div className="mt-2 border rounded-md shadow-sm border-gray-300 overflow-hidden bg-white">

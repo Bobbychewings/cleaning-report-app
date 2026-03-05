@@ -13,8 +13,9 @@ const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "YOUR_PUBL
  * Sends an email notification when an audit is completed.
  * @param {Object} reportData - The audit report data
  * @param {string} adminEmail - The email address to send the report to
+ * @param {string} pdfBase64 - The pdf data uri string
  */
-export async function sendAuditNotification(reportData, adminEmail) {
+export async function sendAuditNotification(reportData, adminEmail, pdfBase64 = null) {
   // If credentials aren't set, log to console instead of failing
   if (EMAILJS_SERVICE_ID === "YOUR_SERVICE_ID") {
     console.warn("EmailJS credentials not configured. Skipping email notification.");
@@ -30,7 +31,9 @@ export async function sendAuditNotification(reportData, adminEmail) {
       health_score: reportData.healthScore,
       total_checks: reportData.totalChecks,
       failed_checks: reportData.failedChecks,
-      submission_time: new Date().toLocaleString()
+      submission_time: new Date().toLocaleString(),
+      // Adding pdf content to template parameters
+      content: pdfBase64
       // You can also generate a link directly to the report if your app is hosted
       // report_link: `https://your-domain.com/admin/reports/${reportData.id}`
     };
