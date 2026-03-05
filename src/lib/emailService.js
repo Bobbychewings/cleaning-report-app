@@ -31,7 +31,9 @@ export async function sendAuditNotification(reportData, adminEmail) {
       total_checks: reportData.totalChecks,
       failed_checks: reportData.failedChecks,
       submission_time: new Date().toLocaleString(),
-      report_link: new URL('/admin', window.location.href).href
+      report_link: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'https://cleaning-report-app.web.app/admin'
+        : new URL('/admin', window.location.href).href
     };
 
     const response = await emailjs.send(
