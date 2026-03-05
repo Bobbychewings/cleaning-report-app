@@ -367,8 +367,7 @@ export default function FormField({ field, value, onChange, images = [], onImage
   if (field.type === 'section') {
     return (
       <div className="pt-6 pb-2 border-b-2 border-gray-200 mb-6 group">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">{field.question}</h2>
-        {renderExtraActions()}
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{field.question}</h2>
       </div>
     );
   }

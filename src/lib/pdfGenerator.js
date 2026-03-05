@@ -26,12 +26,12 @@ const createPDFDoc = (reportData) => {
   // Answers Table
   const tableData = [];
 
-  for (const [key, result] of Object.entries(reportData.answers || {})) {
-    if (result.type === 'section') {
-      let sectionText = result.question || key;
-      if (result.comment) sectionText += `\nComment: ${result.comment}`;
-      if (result.images && result.images.length > 0) sectionText += `\n[${result.images.length} Image(s) Attached]`;
+  const sortedAnswers = Object.entries(reportData.answers || {})
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
 
+  for (const [key, result] of sortedAnswers) {
+    if (result.type === 'section') {
+      const sectionText = result.question || key;
       tableData.push([
         { content: sectionText, colSpan: 3, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }
       ]);

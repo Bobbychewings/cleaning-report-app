@@ -13,7 +13,7 @@ const FIELD_TYPES = [
   { value: 'image', label: 'Image Upload' },
   { value: 'signature', label: 'Signature Pad' },
   { value: 'toggle_text', label: 'Toggle with Text (If Yes/No)' },
-  { value: 'section', label: 'Section Header' }
+  { value: 'section', label: 'Section / Group Label' }
 ];
 
 export default function FormBuilder() {
@@ -84,10 +84,10 @@ export default function FormBuilder() {
     }
   }
 
-  const addField = () => {
+  const addField = (type = 'text') => {
     const newField = {
       id: Date.now().toString(),
-      type: 'text',
+      type: type,
       question: '',
       required: true,
       options: [], // For MCQ
@@ -171,7 +171,7 @@ export default function FormBuilder() {
       ) : (
         <div className="space-y-6">
           {fields.map((field) => (
-            <div key={field.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative group">
+            <div key={field.id} className={`border border-gray-200 rounded-lg p-4 relative group ${field.type === 'section' ? 'bg-gray-100 border-l-4 border-l-gray-400' : 'bg-gray-50'}`}>
               <div className="flex items-start gap-4">
                 <div className="cursor-move text-gray-400 mt-2">
                   <GripVertical size={20} />
@@ -181,7 +181,7 @@ export default function FormBuilder() {
                   <div className="flex gap-4">
                     <input
                       type="text"
-                      placeholder="Question Title"
+                      placeholder={field.type === 'section' ? "Section / Group Label" : "Question Title"}
                       value={field.question}
                       onChange={(e) => updateField(field.id, 'question', e.target.value)}
                       className="flex-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
@@ -301,7 +301,7 @@ export default function FormBuilder() {
                 <button
                   onClick={() => removeField(field.id)}
                   className="text-gray-400 hover:text-red-500 transition p-2"
-                  title="Remove Question"
+                  title={field.type === 'section' ? "Remove Section" : "Remove Question"}
                 >
                   <Trash2 size={20} />
                 </button>
@@ -309,13 +309,22 @@ export default function FormBuilder() {
             </div>
           ))}
 
-          <button
-            onClick={addField}
-            className="w-full py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-primary-500 hover:text-primary-600 transition flex items-center justify-center gap-2 font-medium"
-          >
-            <Plus size={20} />
-            Add New Question
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => addField('text')}
+              className="flex-1 py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-primary-500 hover:text-primary-600 transition flex items-center justify-center gap-2 font-medium"
+            >
+              <Plus size={20} />
+              Add New Question
+            </button>
+            <button
+              onClick={() => addField('section')}
+              className="flex-1 py-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-500 hover:text-gray-700 transition flex items-center justify-center gap-2 font-medium"
+            >
+              <Plus size={20} />
+              Add Section / Group
+            </button>
+          </div>
         </div>
       )}
     </div>
